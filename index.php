@@ -17,7 +17,19 @@ $pageTitle = "Блеск — клининговые услуги";
     <?php if (Auth::isLoggedIn()): ?>
 
     <p>Вы успешно вошли в систему!</p>
-    <p>Ваш ID: <?= Auth::id() ?></p>
+    <?php if (Auth::isLoggedIn() && !Auth::isAdmin()): ?>
+    <p>
+        <a href="/frontend/application_create.php">
+            Создать заявку
+        </a>
+    </p>
+
+    <p>
+        <a href="/frontend/applications.php">
+            Мои заявки
+        </a>
+    </p>
+<?php endif; ?>
 
     <form action="/backend/actions/logout.php" method="POST">
         <button type="submit">Выйти</button>

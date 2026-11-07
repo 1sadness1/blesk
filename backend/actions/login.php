@@ -28,7 +28,11 @@ if ($login === '' || $password === '') {
 
 if (Auth::login($login, $password)) {
 
-    header('Location: /index.php');
+   if (Auth::isAdmin()) {
+        header('Location: /frontend/admin.php');
+    } else {
+        header('Location: /index.php');
+    }
     exit;
 
 } else {

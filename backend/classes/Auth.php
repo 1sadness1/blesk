@@ -16,7 +16,7 @@ class Auth
         session_regenerate_id(true);
         $_SESSION['user_id'] = (int) $user['id'];
         $_SESSION['role_id'] = (int) $user['role_id'];
-        unset($_SESSION['role']); // Очистка поля из прежней версии сайта.
+        unset($_SESSION['role']); 
         return true;
     }
 

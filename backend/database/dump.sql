@@ -79,4 +79,33 @@ INSERT INTO payment_methods (id, name) VALUES
     (1, 'Наличными'),
     (2, 'Банковской картой');
 
+
+INSERT INTO users (
+    login,
+    password_hash,
+    phone,
+    email,
+    role_id
+)
+VALUES (
+    'Admin',
+    '$2y$12$ygF4Ur91mfLmazHUNKwkFOWT/58JDK7/gQicIs5siQ4XkH1OzUory',
+    '8(000)000-00-00',
+    'admin@blesk.test',
+    2
+);
+
+INSERT INTO user_profiles (
+    user_id,
+    last_name,
+    first_name,
+    middle_name
+)
+VALUES (
+    (SELECT id FROM users WHERE login = 'Admin'),
+    'Администратор',
+    'Системный',
+    NULL
+);
+
 COMMIT;
