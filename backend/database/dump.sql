@@ -1,26 +1,38 @@
-
 PRAGMA foreign_keys = ON;
+BEGIN TRANSACTION;
+
+CREATE TABLE roles (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+);
 
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     login TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    full_name TEXT NOT NULL,
     phone TEXT NOT NULL,
     email TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    role_id INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE user_profiles (
+    user_id INTEGER PRIMARY KEY,
+    last_name TEXT NOT NULL CHECK (trim(last_name) <> '' AND instr(last_name, ' ') = 0),
+    first_name TEXT NOT NULL CHECK (trim(first_name) <> '' AND instr(first_name, ' ') = 0),
+    middle_name TEXT CHECK (middle_name IS NULL OR
+                            (trim(middle_name) <> '' AND instr(middle_name, ' ') = 0)),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE statuses (
     id INTEGER PRIMARY KEY,
-    code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL UNIQUE
 );
 
 CREATE TABLE payment_methods (
     id INTEGER PRIMARY KEY,
-    code TEXT NOT NULL UNIQUE,
     name TEXT NOT NULL UNIQUE
 );
 
@@ -42,21 +54,29 @@ CREATE TABLE applications (
 CREATE TABLE reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     application_id INTEGER NOT NULL UNIQUE,
-    user_id INTEGER NOT NULL,
     review_text TEXT NOT NULL,
+    rating INTEGER CHECK (
+        rating IS NULL OR
+        (typeof(rating) = 'integer' AND rating BETWEEN 1 AND 5)
+    ),
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (application_id) REFERENCES applications(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+
+    FOREIGN KEY (application_id)
+        REFERENCES applications(id)
 );
 
-INSERT INTO statuses (id, code, name) VALUES
-    (1, 'new', 'Новая'),
-    (2, 'in_progress', 'В работе'),
-    (3, 'completed', 'Выполнено'),
-    (4, 'cancelled', 'Отменено');
+INSERT INTO roles (id, name) VALUES
+    (1, 'Пользователь'),
+    (2, 'Администратор');
 
-INSERT INTO payment_methods (id, code, name) VALUES
-    (1, 'cash', 'Наличными'),
-    (2, 'card', 'Банковской картой');
+INSERT INTO statuses (id, name) VALUES
+    (1, 'Новая'),
+    (2, 'В работе'),
+    (3, 'Выполнено'),
+    (4, 'Отменено');
 
+INSERT INTO payment_methods (id, name) VALUES
+    (1, 'Наличными'),
+    (2, 'Банковской картой');
 
+COMMIT;
