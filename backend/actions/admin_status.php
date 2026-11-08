@@ -67,15 +67,19 @@ if ((int)$newStatusId === 4 && $cancelReason === '') {
 
 try {
     $result = Application::changeStatus(
-        (int) $applicationId,
-        (int) $newStatusId
+    (int) $applicationId,
+    (int) $newStatusId,
+    $cancelReason
     );
 
-    if ($result) {
-        $_SESSION['admin_flash'] = [
-            'type' => 'success',
-            'message' => 'Статус заявки успешно изменён'
-        ];
+    
+if ($result) {
+    $_SESSION['admin_flash'] = [
+        'type' => 'success',
+        'message' => 'Статус заявки успешно изменён',
+        'application_id' => (int)$applicationId
+    ];
+
     } else {
         $_SESSION['admin_flash'] = [
             'type' => 'error',

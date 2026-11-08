@@ -80,42 +80,56 @@ class Application
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    public static function changeStatus(
-        int $applicationId,
-        int $newStatusId
-    ): bool {
-        if ($applicationId <= 0) {
-            return false;
-        }
-
-        $allowedTransitions = [
-            2 => 1, 
-            3 => 2, 
-            4 => 2  
-        ];
-
-        if (!isset($allowedTransitions[$newStatusId])) {
-            return false;
-        }
-
-        $oldStatusId = $allowedTransitions[$newStatusId];
-
-        $db = Database::getConnection();
-
-        $stmt = $db->prepare(
-            'UPDATE applications
-             SET status_id = :new_status
-             WHERE id = :application_id
-               AND status_id = :old_status'
-        );
-
-        $stmt->execute([
-            'new_status' => $newStatusId,
-            'application_id' => $applicationId,
-            'old_status' => $oldStatusId
-        ]);
-
-        return $stmt->rowCount() === 1;
+    
+public static function changeStatus(
+    int $applicationId,
+    int $newStatusId,
+    ?string $cancelReason = null
+): bool {
+    if ($applicationId <= 0) {
+        return false;
     }
+
+    $allowedTransitions = [
+        2 => 1,
+        3 => 2,
+        4 => 2
+    ];
+
+    if (!isset($allowedTransitions[$newStatusId])) {
+        return false;
+    }
+
+    $oldStatusId = $allowedTransitions[$newStatusId];
+
+    if ($newStatusId === 4) {
+        $cancelReason = trim((string)$cancelReason);
+
+        if ($cancelReason === '') {
+            return false;
+        }
+    } else {
+        $cancelReason = null;
+    }
+
+    $db = Database::getConnection();
+
+    $stmt = $db->prepare(
+        'UPDATE applications
+         SET status_id = :new_status,
+             cancel_reason = :cancel_reason
+         WHERE id = :application_id
+           AND status_id = :old_status'
+    );
+
+    $stmt->execute([
+        'new_status' => $newStatusId,
+        'cancel_reason' => $cancelReason,
+        'application_id' => $applicationId,
+        'old_status' => $oldStatusId
+    ]);
+
+    return $stmt->rowCount() === 1;
+}
 
 }

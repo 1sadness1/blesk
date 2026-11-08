@@ -12,6 +12,12 @@ if (!isset($_SESSION['admin_csrf_token'])) {
 $flash = $_SESSION['admin_flash'] ?? null;
 unset($_SESSION['admin_flash']);
 
+$changedApplicationId = (
+    is_array($flash) &&
+    ($flash['type'] ?? '') === 'success'
+)
+    ? (int)($flash['application_id'] ?? 0) : 0;
+
 $applications = Application::allForAdmin();
 
 $statusFilter = trim((string)($_GET['status'] ?? ''));
@@ -204,25 +210,62 @@ require __DIR__ . '/partials/header.php';
 
                     <td><?= e($date) ?></td>
 
-                    <td><span class="application-status <?= e($statusClass) ?>"><?= e($statusName) ?></span></td>
+                    <td><span class="application-status <?= e($statusClass) ?><?= $changedApplicationId === (int)$application['id'] ? ' status-changed' : '' ?>"><?= e($statusName) ?></span></td>
 
                     <td>
                         <div class="admin-actions">
 
                             <?php if (!empty($nextStatuses)): ?>
 
-                                <?php foreach ($nextStatuses as $newId => $label): ?>
+            <?php foreach ($nextStatuses as $newId => $label): ?>
+                                    
+<?php if ((int)$newId === 4): ?>
 
-                                    <form action="/backend/actions/admin_status.php" method="POST">
-                                        <input type="hidden" name="csrf_token" value="<?= e((string)$_SESSION['admin_csrf_token']) ?>">
+    <button type="button" class="admin-action-cancel" onclick="document.getElementById('cancel-dialog-<?= (int)$application['id'] ?>').showModal()">Отменить</button>
 
-                                        <input type="hidden" name="application_id"value="<?= (int)$application['id'] ?>">
+    <dialog id="cancel-dialog-<?= (int)$application['id'] ?>"class="admin-cancel-dialog">
 
-                                        <input type="hidden" name="status_id" value="<?= (int)$newId ?>">
+        <form action="/backend/actions/admin_status.php" method="POST">
 
-                                        <button type="submit" class="<?= $newId === 4 ? 'admin-action-cancel' : 'admin-action-primary' ?>"><?= e($label) ?></button>
-                                    </form>
+            <h3>Отмена заявки № <?= (int)$application['id'] ?></h3>
 
+            <label for="cancel-reason-<?= (int)$application['id'] ?>">Причина отмены*</label>
+
+            <textarea id="cancel-reason-<?= (int)$application['id'] ?>"name="cancel_reason" rows="4" placeholder="Укажите причину отмены" required></textarea>
+
+            <input type="hidden" name="csrf_token" value="<?= e((string)$_SESSION['admin_csrf_token']) ?>">
+
+            <input type="hidden" name="application_id" value="<?= (int)$application['id'] ?>">
+
+            <input type="hidden" name="status_id" value="4">
+
+            <div class="admin-cancel-dialog-actions">
+                <button type="submit" class="admin-action-primary">Подтвердить отмену</button>
+
+                <button type="button" class="admin-action-cancel" onclick="this.closest('dialog').close()">Назад</button>
+            </div>
+
+        </form>
+    </dialog>
+
+<?php else: ?>
+
+    <form action="/backend/actions/admin_status.php" method="POST">
+
+        <input type="hidden"name="csrf_token" value="<?= e((string)$_SESSION['admin_csrf_token']) ?>">
+
+        <input type="hidden" name="application_id" value="<?= (int)$application['id'] ?>">
+
+        <input type="hidden"name="status_id" value="<?= (int)$newId ?>">
+
+        <button type="submit" class="admin-action-primary"><?= e($label) ?></button>
+
+    </form>
+
+<?php endif; ?>
+
+
+                                    
                                 <?php endforeach; ?>
 
                             <?php else: ?>

@@ -7,6 +7,27 @@ Auth::requireUser();
 
 $applications = Application::forUser((int) Auth::id());
 
+$tab = $_GET['tab'] ?? 'all';
+
+if (!is_string($tab) || !in_array($tab, ['all', 'active', 'finished'], true)) {
+    $tab = 'all';
+}
+
+if ($tab !== 'all') {
+    $applications = array_values(array_filter(
+        $applications,
+        static function (array $application) use ($tab): bool {
+            $status = (string)$application['status_name'];
+
+            if ($tab === 'active') {
+                return in_array($status, ['Новая', 'В работе'], true);
+            }
+
+            return in_array($status, ['Выполнено', 'Отменено'], true);
+        }
+    ));
+}
+
 $reviews = Review::forUser((int)Auth::id());
 
 if (!isset($_SESSION['review_csrf_token'])) {
@@ -27,6 +48,16 @@ require __DIR__ . '/partials/header.php';
 
     <a href="/frontend/application_create.php" class="applications-create-button">Создать заявку</a>
 </div>
+
+<nav class="applications-tabs" aria-label="Фильтр заявок">
+
+    <a href="/frontend/applications.php?tab=all"class="<?= $tab === 'all' ? 'is-active' : '' ?>">Все</a>
+
+    <a href="/frontend/applications.php?tab=active"class="<?= $tab === 'active' ? 'is-active' : '' ?>">Активные</a>
+
+    <a href="/frontend/applications.php?tab=finished"class="<?= $tab === 'finished' ? 'is-active' : '' ?>">Завершённые</a>
+
+</nav>
 
 <?php if (empty($applications)): ?>
 
@@ -72,6 +103,20 @@ $statusClass = match ($cardStatus) {
 <p class="application-address">
     <?= htmlspecialchars((string)$application['address'], ENT_QUOTES, 'UTF-8') ?>
 </p>
+
+<?php if (
+    $application['status_name'] === 'Отменено' &&
+    !empty($application['cancel_reason'])
+): ?>
+    <p class="application-cancel-reason">
+        <strong>Причина отмены:</strong>
+        <?= htmlspecialchars(
+            (string)$application['cancel_reason'],
+            ENT_QUOTES,
+            'UTF-8'
+        ) ?>
+    </p>
+<?php endif; ?>
 
 <div class="application-review">
 
@@ -162,13 +207,19 @@ $existingReview = $reviews[$applicationId] ?? null;
 
     </dialog>
 
+
 <?php else: ?>
 
     <p class="review-hint">
-        Отзыв после выполнения услуги
+        <?php if ($statusName === 'Отменено'): ?>
+            Отзыв недоступен для отменённой заявки
+        <?php else: ?>
+            Отзыв после выполнения услуги
+        <?php endif; ?>
     </p>
 
 <?php endif; ?>
+
 
 </div>
 

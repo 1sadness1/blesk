@@ -20,6 +20,26 @@ class User
         return $user ?: null;
     }
 
+    
+public static function findById(int $userId): ?array
+{
+    $db = Database::getConnection();
+
+    $stmt = $db->prepare(
+        'SELECT id, phone
+         FROM users
+         WHERE id = :user_id'
+    );
+
+    $stmt->execute([
+        'user_id' => $userId
+    ]);
+
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $user ?: null;
+}
+
     public static function create(array $data): int
     {
     

@@ -4,6 +4,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../backend/bootstrap.php';
 
 Auth::requireUser();
+$currentUser = User::findById((int)Auth::id());
+$defaultPhone = (string)($currentUser['phone'] ?? '');
 
 $errors = $_SESSION['errors'] ?? [];
 $old = $_SESSION['old'] ?? [];
@@ -96,9 +98,7 @@ require __DIR__ . '/partials/header.php';
             id="contact_phone"
             name="contact_phone"
             placeholder="8(999)123-45-67"
-            value="<?= eApplication($old['contact_phone'] ?? '') ?>"
-            required
-        >
+            value="<?= eApplication($old['contact_phone'] ?? $defaultPhone) ?>" required>
 
         <?php if (isset($errors['contact_phone'])): ?>
             <p class="field-error">

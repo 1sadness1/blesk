@@ -45,6 +45,7 @@ CREATE TABLE applications (
     service_name TEXT NOT NULL,
     payment_method_id INTEGER NOT NULL,
     status_id INTEGER NOT NULL DEFAULT 1,
+    cancel_reason TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id),
