@@ -48,6 +48,23 @@ if ($applicationId === false || $newStatusId === false) {
     exit;
 }
 
+
+$cancelReason = $_POST['cancel_reason'] ?? '';
+
+$cancelReason = is_string($cancelReason)
+    ? trim($cancelReason)
+    : '';
+
+if ((int)$newStatusId === 4 && $cancelReason === '') {
+    $_SESSION['admin_flash'] = [
+        'type' => 'error',
+        'message' => 'Укажите причину отмены заявки'
+    ];
+
+    header('Location: /frontend/admin.php', true, 303);
+    exit;
+}
+
 try {
     $result = Application::changeStatus(
         (int) $applicationId,
