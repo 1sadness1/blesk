@@ -10,52 +10,65 @@ unset(
     $_SESSION['login_errors'],
     $_SESSION['login_old']
 );
+
+$pageTitle = 'Авторизация — Блеск';
+require __DIR__ . '/partials/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Авторизация — Блеск</title>
-</head>
-<body>
+<main class="login-page">
+
     <h1>Авторизация</h1>
 
     <?php if (isset($errors['general'])): ?>
-        <p style="color: red;">
-            <?= htmlspecialchars($errors['general'], ENT_QUOTES, 'UTF-8') ?>
+        <p class="login-error">
+            <?= htmlspecialchars(
+                (string)$errors['general'],
+                ENT_QUOTES,
+                'UTF-8'
+            ) ?>
         </p>
     <?php endif; ?>
 
-    <form action="/backend/actions/login.php" method="POST">
+    <form
+        class="login-form"
+        action="/backend/actions/login.php"
+        method="POST"
+    >
 
         <label for="login">Логин:</label>
         <input
             type="text"
             id="login"
             name="login"
+            placeholder="Введите логин"
             value="<?= htmlspecialchars($oldLogin, ENT_QUOTES, 'UTF-8') ?>"
+            autocomplete="username"
             required
         >
-        <br><br>
 
         <label for="password">Пароль:</label>
         <input
             type="password"
             id="password"
             name="password"
+            placeholder="Введите пароль"
+            autocomplete="current-password"
             required
         >
-        <br><br>
 
-        <button type="submit">Войти</button>
+        <button class="button-primary" type="submit">
+            Войти
+        </button>
 
     </form>
 
-    <p>
-        Еще не зарегистрированы?
-        <a href="register.php">Регистрация</a>
+    <p class="login-switch">
+        Ещё не зарегистрированы?
+        <a href="/frontend/register.php">Регистрация</a>
     </p>
-</body>
-</html>
+
+</main>
+
+<script src="/frontend/assets/js/app.js" defer></script>
+
+<?php require __DIR__ . '/partials/footer.php'; ?>

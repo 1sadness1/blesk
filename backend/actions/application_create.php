@@ -15,6 +15,7 @@ $data = [
     'contact_phone' => trim((string)($_POST['contact_phone'] ?? '')),
     'desired_datetime' => trim((string)($_POST['desired_datetime'] ?? '')),
     'service_name' => trim((string)($_POST['service_name'] ?? '')),
+    'other_service_description' => trim((string)($_POST['other_service_description'] ?? '')),
     'payment_method_id' => trim((string)($_POST['payment_method_id'] ?? ''))
 ];
 
@@ -28,12 +29,37 @@ if (!preg_match('/^8\(\d{3}\)\d{3}-\d{2}-\d{2}$/', $data['contact_phone'])) {
     $errors['contact_phone'] = 'Формат телефона: 8(999)123-45-67';
 }
 
-if ($data['desired_datetime'] === '') {
-    $errors['desired_datetime'] = 'Укажите дату и время уборки';
+$dateTime = DateTimeImmutable::createFromFormat(
+    '!d.m.Y H:i',
+    $data['desired_datetime']
+);
+
+if (
+    !$dateTime ||
+    $dateTime->format('d.m.Y H:i') !== $data['desired_datetime']
+) {
+    $errors['desired_datetime'] =
+        'Укажите дату и время в формате ДД.ММ.ГГГГ ЧЧ:ММ';
 }
 
-if ($data['service_name'] === '') {
-    $errors['service_name'] = 'Укажите вид услуги';
+$allowedServices = [
+    'Общий клининг',
+    'Генеральная уборка',
+    'Послестроительная уборка',
+    'Химчистка ковров и мебели',
+    'Иная услуга'
+];
+
+if (!in_array($data['service_name'], $allowedServices, true)) {
+    $errors['service_name'] = 'Выберите вид услуги из списка';
+}
+
+if (
+    $data['service_name'] === 'Иная услуга' &&
+    $data['other_service_description'] === ''
+) {
+    $errors['other_service_description'] =
+        'Опишите, какая услуга вам требуется';
 }
 
 if (!in_array($data['payment_method_id'], ['1', '2'], true)) {
@@ -49,7 +75,14 @@ if (!empty($errors)) {
 }
 
 try {
-    Application::create((int)Auth::id(), $data);
+    $applicationData = $data;
+
+    if ($applicationData['service_name'] === 'Иная услуга') {
+        $applicationData['service_name'] =
+            'Иная услуга: ' . $data['other_service_description'];
+    }
+
+    Application::create((int)Auth::id(), $applicationData);
 
     $_SESSION['success'] = 'Заявка успешно создана!';
     unset($_SESSION['errors'], $_SESSION['old']);

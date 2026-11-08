@@ -23,7 +23,7 @@ $isAdmin = Auth::isAdmin();
 
         <nav class="desktop-nav" aria-label="Основная навигация">
 
-            <a href="/index.php">Главная</a>
+            <?php if (!$isAdmin): ?><a href="/index.php">Главная</a><?php endif; ?>
 
             <?php if (!$isLoggedIn): ?>
 
@@ -32,7 +32,7 @@ $isAdmin = Auth::isAdmin();
 
             <?php elseif ($isAdmin): ?>
 
-                <a href="/frontend/admin.php">Панель администратора</a>
+                <?php if (!$isAdmin): ?><a href="/index.php">Главная</a><?php endif; ?>
 
                 <form class="logout-form"
                       action="/backend/actions/logout.php"
@@ -74,7 +74,7 @@ $isAdmin = Auth::isAdmin();
 
             <nav aria-label="Мобильная навигация">
 
-                <a href="/index.php">Главная</a>
+                <?php if (!$isAdmin): ?><a href="/index.php">Главная</a><?php endif; ?>
 
                 <?php if (!$isLoggedIn): ?>
 
@@ -82,11 +82,6 @@ $isAdmin = Auth::isAdmin();
                     <a href="/frontend/register.php">Регистрация</a>
 
                 <?php elseif ($isAdmin): ?>
-
-                    <a href="/frontend/admin.php">
-                        Панель администратора
-                    </a>
-
                     <form class="logout-form"
                           action="/backend/actions/logout.php"
                           method="POST">

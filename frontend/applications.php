@@ -16,24 +16,17 @@ if (!isset($_SESSION['review_csrf_token'])) {
 $reviewFlash = $_SESSION['review_flash'] ?? null;
 unset($_SESSION['review_flash']);
 
+$pageTitle = 'Мои заявки — Блеск';
+require __DIR__ . '/partials/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мои заявки — Блеск</title>
-</head>
-<body>
+<main class="applications-page">
 
-<h1>Мои заявки</h1>
+<div class="applications-heading">
+    <h1>Мои заявки</h1>
 
-<p>
-    <a href="/frontend/application_create.php">
-        Создать новую заявку
-    </a>
-</p>
+    <a href="/frontend/application_create.php" class="applications-create-button">Создать заявку</a>
+</div>
 
 <?php if (empty($applications)): ?>
 
@@ -41,52 +34,47 @@ unset($_SESSION['review_flash']);
 
 <?php else: ?>
 <?php if ($reviewFlash !== null): ?>
-    <p>
-        <?= htmlspecialchars(
-            (string)$reviewFlash,
-            ENT_QUOTES,
-            'UTF-8'
-        ) ?>
-    </p>
+    <p><?= htmlspecialchars((string)$reviewFlash,ENT_QUOTES,'UTF-8') ?></p>
 <?php endif; ?>
+<div class="applications-grid">
     <?php foreach ($applications as $application): ?>
 
-        <hr>
+        <article class="application-card">
 
-        <h2>
-            Заявка №
-            <?= (int) $application['id'] ?>
-        </h2>
+        
+<?php
+$cardStatus = (string)$application['status_name'];
 
-        <p>
-            <strong>Адрес:</strong>
-            <?= htmlspecialchars((string) $application['address'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
+$statusClass = match ($cardStatus) {
+    'Выполнено' => 'status-completed',
+    'В работе' => 'status-progress',
+    'Отменено' => 'status-cancelled',
+    default => 'status-new'
+};
+?>
 
-        <p>
-            <strong>Телефон:</strong>
-            <?= htmlspecialchars((string) $application['contact_phone'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
+<div class="application-card-header">
+    <h2>Заявка № <?= (int)$application['id'] ?></h2>
 
-        <p>
-            <strong>Дата и время:</strong>
-            <?= htmlspecialchars((string) $application['desired_datetime'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
+    <span class="application-status <?= $statusClass ?>">
+        <?= htmlspecialchars($cardStatus, ENT_QUOTES, 'UTF-8') ?>
+    </span>
+</div>
 
-        <p>
-            <strong>Вид услуги:</strong>
-            <?= htmlspecialchars((string) $application['service_name'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
+<p class="application-service">
+    <?= htmlspecialchars((string)$application['service_name'], ENT_QUOTES, 'UTF-8') ?>
+</p>
 
-        <p>
-            <strong>Способ оплаты:</strong>
-            <?= htmlspecialchars((string) $application['payment_method_name'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
+<p class="application-date">
+    <?= htmlspecialchars((string)$application['desired_datetime'], ENT_QUOTES, 'UTF-8') ?>
+</p>
 
-        <p>
-            <strong>Статус:</strong>
-            <?= htmlspecialchars((string) $application['status_name'], ENT_QUOTES, 'UTF-8') ?>
-        </p>
+<p class="application-address">
+    <?= htmlspecialchars((string)$application['address'], ENT_QUOTES, 'UTF-8') ?>
+</p>
+
+<div class="application-review">
+
 
         
 <?php
@@ -98,63 +86,27 @@ $existingReview = $reviews[$applicationId] ?? null;
 
 <?php if ($existingReview !== null): ?>
 
-    <p>
-        <strong>Отзыв оставлен</strong>
-        · Оценка: <?= (int)$existingReview['rating'] ?> из 5
-    </p>
+    <p><strong>Отзыв оставлен</strong>· Оценка: <?= (int)$existingReview['rating'] ?> из 5</p>
 
-    <button
-        type="button"
-        onclick="document.getElementById('view-review-<?= $applicationId ?>').showModal()"
-        style="background:none; border:none; padding:0; color:#0645ad; text-decoration:underline; cursor:pointer; font:inherit;"
-    >
-        Посмотреть отзыв
-    </button>
+    <button type="button" onclick="document.getElementById('view-review-<?= $applicationId ?>').showModal()" style="background:none; border:none; padding:0; color:#0645ad; text-decoration:underline; cursor:pointer; font:inherit;">Посмотреть отзыв</button>
 
-    <dialog
-        id="view-review-<?= $applicationId ?>"
-        aria-labelledby="view-review-title-<?= $applicationId ?>"
-        style="width:min(420px, 90%); box-sizing:border-box; padding:24px; border:1px solid #ccc; border-radius:10px;"
-    >
+    <dialog id="view-review-<?= $applicationId ?>"aria-labelledby="view-review-title-<?= $applicationId ?>"style="width:min(420px, 90%); box-sizing:border-box; padding:24px; border:1px solid #ccc; border-radius:10px;">
 
-        <button
-            type="button"
-            aria-label="Закрыть окно"
-            onclick="this.closest('dialog').close()"
-            style="position:absolute; top:12px; right:12px; border:none; background:none; font-size:24px; cursor:pointer;"
-        >
+        <button type="button" aria-label="Закрыть окно" onclick="this.closest('dialog').close()" style="position:absolute; top:12px; right:12px; border:none; background:none; font-size:24px; cursor:pointer;">
             &times;
         </button>
 
-        <h3 id="view-review-title-<?= $applicationId ?>">
-            Ваш отзыв
-        </h3>
+        <h3 id="view-review-title-<?= $applicationId ?>">Ваш отзыв</h3>
 
         <p>Заявка № <?= $applicationId ?></p>
 
-        <p>
-            <strong>Оценка:</strong>
-            <?= (int)$existingReview['rating'] ?> из 5
-        </p>
+        <p><strong>Оценка:</strong><?= (int)$existingReview['rating'] ?> из 5</p>
 
-        <p>
-            <strong>Текст отзыва:</strong>
-        </p>
+        <p><strong>Текст отзыва:</strong></p>
 
-        <p>
-            <?= nl2br(htmlspecialchars(
-                (string)$existingReview['review_text'],
-                ENT_QUOTES,
-                'UTF-8'
-            )) ?>
-        </p>
+        <p><?= nl2br(htmlspecialchars((string)$existingReview['review_text'],ENT_QUOTES,'UTF-8')) ?></p>
 
-        <button
-            type="button"
-            onclick="this.closest('dialog').close()"
-        >
-            Закрыть
-        </button>
+        <button type="button"onclick="this.closest('dialog').close()">Закрыть</button>
 
     </dialog>
 
@@ -162,66 +114,29 @@ $existingReview = $reviews[$applicationId] ?? null;
 
     <p>Услуга выполнена.</p>
 
-    <button
-        type="button"
-        onclick="document.getElementById('review-dialog-<?= $applicationId ?>').showModal()"
-        style="background:none; border:none; padding:0; color:#0645ad; text-decoration:underline; cursor:pointer; font:inherit;"
-    >
-        Оставить отзыв
-    </button>
+    <button type="button" onclick="document.getElementById('review-dialog-<?= $applicationId ?>').showModal()" style="background:none; border:none; padding:0; color:#0645ad; text-decoration:underline; cursor:pointer; font:inherit;">Оставить отзыв</button>
 
-    <dialog
-        id="review-dialog-<?= $applicationId ?>"
-        aria-labelledby="review-title-<?= $applicationId ?>"
-        style="width: min(420px, 90%); box-sizing:border-box; padding:24px; border:1px solid #ccc; border-radius:10px;"
-    >
+    <dialog id="review-dialog-<?= $applicationId ?>"aria-labelledby="review-title-<?= $applicationId ?>"style="width: min(420px, 90%); box-sizing:border-box; padding:24px; border:1px solid #ccc; border-radius:10px;">
 
-        <h3 id="review-title-<?= $applicationId ?>">
-            Оставить отзыв
-        </h3>
-    <button
-    type="button"
-    aria-label="Закрыть окно"
-    onclick="this.closest('dialog').close()"
-    style="position:absolute; top:12px; right:12px; border:none; background:none; font-size:24px; cursor:pointer;"
-    >
+        <h3 id="review-title-<?= $applicationId ?>">Оставить отзыв</h3>
+    <button type="button" aria-label="Закрыть окно" onclick="this.closest('dialog').close()"style="position:absolute; top:12px; right:12px; border:none; background:none; font-size:24px; cursor:pointer;">
     &times;
     </button>    
 
         <p>Заявка № <?= $applicationId ?></p>
 
-        <form
-            action="/backend/actions/review_create.php"
-            method="POST"
-        >
+        <form action="/backend/actions/review_create.php" method="POST">
 
-            <input
-                type="hidden"
-                name="csrf_token"
-                value="<?= htmlspecialchars(
-                    $_SESSION['review_csrf_token'],
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>"
-            >
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['review_csrf_token'],ENT_QUOTES,'UTF-8') ?>">
 
-            <input
-                type="hidden"
-                name="application_id"
-                value="<?= $applicationId ?>"
-            >
+            <input type="hidden" name="application_id" value="<?= $applicationId ?>">
 
             <p>
-                <label for="rating-<?= $applicationId ?>">
-                    Ваша оценка:
-                </label>
+                <label for="rating-<?= $applicationId ?>">Ваша оценка:</label>
             </p>
 
             <p>
-                <select
-                    name="rating"
-                    id="rating-<?= $applicationId ?>"
-                    required>
+                <select name="rating" id="rating-<?= $applicationId ?>"required>
                     <option value="">Выберите оценку</option>
                     <option value="5">5 — Отлично</option>
                     <option value="4">4 — Хорошо</option>
@@ -232,45 +147,37 @@ $existingReview = $reviews[$applicationId] ?? null;
             </p>
 
             <p>
-                <label for="review-<?= $applicationId ?>">
-                    Текст отзыва:
-                </label>
+                <label for="review-<?= $applicationId ?>">Текст отзыва:</label>
             </p>
 
             <p>
-                <textarea
-                    name="review_text"
-                    id="review-<?= $applicationId ?>"
-                    rows="4"
-                    required
-                    style="width:100%; box-sizing:border-box;"
-                ></textarea>
+                <textarea name="review_text" id="review-<?= $applicationId ?>"rows="4" required style="width:100%; box-sizing:border-box;"></textarea>
             </p>
 
-            <button type="submit">
-                Отправить отзыв
-            </button>
+            <button type="submit">Отправить отзыв</button>
 
-            <button
-                type="button"
-                onclick="this.closest('dialog').close()"
-            >
-                Отмена
-            </button>
+            <button type="button" onclick="this.closest('dialog').close()">Отмена</button>
 
         </form>
 
     </dialog>
 
+<?php else: ?>
+
+    <p class="review-hint">
+        Отзыв после выполнения услуги
+    </p>
+
 <?php endif; ?>
 
-    <?php endforeach; ?>
+</div>
 
+</article>
+
+<?php endforeach; ?>
+</div>
 <?php endif; ?>
 
-<hr>
+</main>
 
-<p><a href="/index.php">На главную</a></p>
-
-</body>
-</html>
+<?php require __DIR__ . '/partials/footer.php'; ?>

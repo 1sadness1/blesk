@@ -17,15 +17,11 @@ function e($value): string
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Регистрация — Блеск</title>
-</head>
-<body>
-
+<?php
+$pageTitle = 'Регистрация — Блеск';
+require __DIR__ . '/partials/header.php';
+?>
+<main class="register-page">
 <h1>Регистрация</h1>
 
 <?php if ($success): ?>
@@ -36,45 +32,48 @@ function e($value): string
     <p style="color: red;"><?= e($errors['general']) ?></p>
 <?php endif; ?>
 
-<form action="/backend/actions/register.php" method="POST">
+<form class="register-form" action="/backend/actions/register.php" method="POST">
 
     <label for="login">Логин:</label>
     <input
         type="text"
         id="login"
         name="login"
+        placeholder="Введите логин"
         value="<?= e($old['login'] ?? '') ?>"
         required
     >
     <?php if (isset($errors['login'])): ?>
         <p style="color: red;"><?= e($errors['login']) ?></p>
     <?php endif; ?>
-    <br>
+    
 
     <label for="password">Пароль:</label>
     <input
         type="password"
         id="password"
         name="password"
+        placeholder="Введите пароль"
         required
     >
     <?php if (isset($errors['password'])): ?>
         <p style="color: red;"><?= e($errors['password']) ?></p>
     <?php endif; ?>
-    <br>
+    
 
     <label for="full_name">ФИО:</label>
     <input
         type="text"
         id="full_name"
         name="full_name"
+        placeholder="Введите ФИО"
         value="<?= e($old['full_name'] ?? '') ?>"
         required
     >
     <?php if (isset($errors['full_name'])): ?>
         <p style="color: red;"><?= e($errors['full_name']) ?></p>
     <?php endif; ?>
-    <br>
+    
 
     <label for="phone">Телефон:</label>
     <input
@@ -88,22 +87,24 @@ function e($value): string
     <?php if (isset($errors['phone'])): ?>
         <p style="color: red;"><?= e($errors['phone']) ?></p>
     <?php endif; ?>
-    <br>
+    
 
     <label for="email">Электронная почта:</label>
     <input
         type="email"
         id="email"
         name="email"
+        placeholder="Введите электронную почту"
         value="<?= e($old['email'] ?? '') ?>"
         required
     >
     <?php if (isset($errors['email'])): ?>
         <p style="color: red;"><?= e($errors['email']) ?></p>
     <?php endif; ?>
-    <br><br>
-
-    <button type="submit">Создать пользователя</button>
+    
+    <button class="button-primary" type="submit">
+    Зарегистрироваться
+    </button>
 
 </form>
 
@@ -111,6 +112,6 @@ function e($value): string
     Уже зарегистрированы?
     <a href="login.php">Вход</a>
 </p>
-
-</body>
-</html>
+</main>
+<script src="/frontend/assets/js/app.js" defer></script>
+<?php require __DIR__ . '/partials/footer.php'; ?>

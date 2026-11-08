@@ -14,30 +14,135 @@ unset($_SESSION['admin_flash']);
 
 $applications = Application::allForAdmin();
 
+$statusFilter = trim((string)($_GET['status'] ?? ''));
+
+$allowedStatuses = [
+    'Новая',
+    'В работе',
+    'Выполнено',
+    'Отменено'
+];
+
+if (!in_array($statusFilter, $allowedStatuses, true)) {
+    $statusFilter = '';
+}
+
+if ($statusFilter !== '') {
+    $applications = array_values(array_filter(
+        $applications,
+        static function (array $application) use ($statusFilter): bool {
+            return (string)$application['status_name'] === $statusFilter;
+        }
+    ));
+}
+
+
+$serviceFilter = trim((string)($_GET['service'] ?? ''));
+
+$allowedServices = [
+    'Общий клининг',
+    'Генеральная уборка',
+    'Послестроительная уборка',
+    'Химчистка ковров и мебели',
+    'Иная услуга'
+];
+
+if (!in_array($serviceFilter, $allowedServices, true)) {
+    $serviceFilter = '';
+}
+
+if ($serviceFilter !== '') {
+    $applications = array_values(array_filter(
+        $applications,
+        static function (array $application) use ($serviceFilter): bool {
+            $serviceName = (string)$application['service_name'];
+
+            if ($serviceFilter === 'Иная услуга') {
+                return $serviceName === 'Иная услуга'
+                    || str_starts_with($serviceName, 'Иная услуга:');
+            }
+
+            return $serviceName === $serviceFilter;
+        }
+    ));
+}
+
+
+$perPage = 2;
+
+$totalApplications = count($applications);
+$totalPages = max(1, (int)ceil($totalApplications / $perPage));
+
+$page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT);
+
+if ($page === false || $page === null || $page < 1) {
+    $page = 1;
+}
+
+$page = min($page, $totalPages);
+
+$offset = ($page - 1) * $perPage;
+
+$applications = array_slice($applications, $offset, $perPage);
+
 function e(string $value): string
 {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
 }
+
+$pageTitle = 'Панель администратора — Блеск';
+require __DIR__ . '/partials/header.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель администратора — Блеск</title>
-</head>
-<body>
+<main class="admin-page">
 
 <h1>Панель администратора</h1>
 
-<h2>Заявки пользователей</h2>
+
+
+
+
+<form action="/frontend/admin.php" method="GET" class="admin-filters">
+
+    <div class="admin-filter-field">
+        <label for="status-filter">Статус</label>
+
+        <select name="status" id="status-filter" onchange="this.form.requestSubmit()">
+            <option value="">Все статусы</option>
+
+            <?php foreach ($allowedStatuses as $status): ?>
+                <option value="<?= e($status) ?>"<?= $statusFilter === $status ? 'selected' : '' ?>>
+                    <?= e($status) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="admin-filter-field">
+        <label for="service-filter">Вид услуги</label>
+
+        <select name="service" id="service-filter" onchange="this.form.requestSubmit()">
+            <option value="">Все услуги</option>
+
+            <?php foreach ($allowedServices as $service): ?>
+                <option value="<?= e($service) ?>"<?= $serviceFilter === $service ? 'selected' : '' ?>>
+                    <?= e($service) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <?php if ($statusFilter !== '' || $serviceFilter !== ''): ?>
+        <a class="admin-filter-reset" href="/frontend/admin.php">Сбросить</a>
+    <?php endif; ?>
+
+</form>
+
 
 <?php if ($flash): ?>
-    <p style="color: <?= $flash['type'] === 'success' ? 'green' : 'red' ?>;">
-        <?= e((string)$flash['message']) ?>
-    </p>
+    <div class="admin-toast <?= $flash['type'] === 'success' ? 'admin-toast-success' : 'admin-toast-error' ?>"role="status"><?= e((string)$flash['message']) ?></div>
 <?php endif; ?>
+
 
 <?php if (empty($applications)): ?>
 
@@ -45,127 +150,129 @@ function e(string $value): string
 
 <?php else: ?>
 
-    <?php foreach ($applications as $application): ?>
+    
+<div class="admin-table-wrap">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Заявка</th>
+                <th>Клиент</th>
+                <th>Услуга</th>
+                <th>Дата</th>
+                <th>Статус</th>
+                <th>Действие</th>
+            </tr>
+        </thead>
 
-        <hr>
+        <tbody>
+            <?php foreach ($applications as $application): ?>
+                <?php
+                $statusId = (int)$application['status_id'];
+                $statusName = (string)$application['status_name'];
 
-        <h3>Заявка № <?= (int)$application['id'] ?></h3>
+                $statusClass = match ($statusName) {
+                    'Новая' => 'status-new',
+                    'В работе' => 'status-progress',
+                    'Выполнено' => 'status-completed',
+                    'Отменено' => 'status-cancelled',
+                    default => ''
+                };
 
-        <p>
-            <strong>Логин клиента:</strong>
-            <?= e((string)$application['login']) ?>
-        </p>
+                $nextStatuses = [];
 
-        <?php
-        $fullName = trim(implode(' ', [
-            $application['last_name'] ?? '',
-            $application['first_name'] ?? '',
-            $application['middle_name'] ?? ''
-        ]));
-        ?>
+                if ($statusId === 1) {
+                    $nextStatuses = [2 => 'Взять в работу'];
+                } elseif ($statusId === 2) {
+                    $nextStatuses = [
+                        3 => 'Перевести в выполнено',
+                        4 => 'Отменить'
+                    ];
+                }
 
-        <p>
-            <strong>ФИО клиента:</strong>
-            <?= e($fullName) ?>
-        </p>
+                $date = explode(
+                    ' ',
+                    (string)$application['desired_datetime']
+                )[0];
+                ?>
 
-        <p>
-            <strong>Адрес:</strong>
-            <?= e((string)$application['address']) ?>
-        </p>
+                <tr>
+                    <td>№ <?= (int)$application['id'] ?></td>
 
-        <p>
-            <strong>Телефон:</strong>
-            <?= e((string)$application['contact_phone']) ?>
-        </p>
+                    <td><?= e((string)$application['login']) ?></td>
 
-        <p>
-            <strong>Дата и время:</strong>
-            <?= e((string)$application['desired_datetime']) ?>
-        </p>
+                    <td><?= e((string)$application['service_name']) ?></td>
 
-        <p>
-            <strong>Вид услуги:</strong>
-            <?= e((string)$application['service_name']) ?>
-        </p>
+                    <td><?= e($date) ?></td>
 
-        <p>
-            <strong>Способ оплаты:</strong>
-            <?= e((string)$application['payment_method_name']) ?>
-        </p>
+                    <td><span class="application-status <?= e($statusClass) ?>"><?= e($statusName) ?></span></td>
 
-        <p>
-            <strong>Статус:</strong>
-            <?= e((string)$application['status_name']) ?>
-        </p>
+                    <td>
+                        <div class="admin-actions">
 
-        <h4>Изменить статус</h4>
+                            <?php if (!empty($nextStatuses)): ?>
 
-        <?php
-        $statusId = (int)$application['status_id'];
-        $nextStatuses = [];
+                                <?php foreach ($nextStatuses as $newId => $label): ?>
 
-        if ($statusId === 1) {
-            $nextStatuses = [2 => 'В работе'];
-        } elseif ($statusId === 2) {
-            $nextStatuses = [
-                3 => 'Выполнено',
-                4 => 'Отменено'
-            ];
-        }
-        ?>
+                                    <form action="/backend/actions/admin_status.php" method="POST">
+                                        <input type="hidden" name="csrf_token" value="<?= e((string)$_SESSION['admin_csrf_token']) ?>">
 
-        <?php if (!empty($nextStatuses)): ?>
+                                        <input type="hidden" name="application_id"value="<?= (int)$application['id'] ?>">
 
-            <?php foreach ($nextStatuses as $newId => $label): ?>
+                                        <input type="hidden" name="status_id" value="<?= (int)$newId ?>">
 
-                <form
-                    action="/backend/actions/admin_status.php"
-                    method="POST"
-                >
-                    <input
-                        type="hidden"
-                        name="csrf_token"
-                        value="<?= e($_SESSION['admin_csrf_token']) ?>"
-                    >
+                                        <button type="submit" class="<?= $newId === 4 ? 'admin-action-cancel' : 'admin-action-primary' ?>"><?= e($label) ?></button>
+                                    </form>
 
-                    <input
-                        type="hidden"
-                        name="application_id"
-                        value="<?= (int)$application['id'] ?>"
-                    >
+                                <?php endforeach; ?>
 
-                    <input
-                        type="hidden"
-                        name="status_id"
-                        value="<?= (int)$newId ?>"
-                    >
+                            <?php else: ?>
+                                <span class="admin-no-action">—</span>
+                            <?php endif; ?>
 
-                    <button type="submit">
-                        <?= e($label) ?>
-                    </button>
-
-                </form>
+                        </div>
+                    </td>
+                </tr>
 
             <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 
+
+
+<?php if ($totalPages > 1): ?>
+    <nav class="admin-pagination" aria-label="Страницы заявок">
+
+        <?php if ($page > 1): ?>
+            <a href="<?= e('/frontend/admin.php?' . http_build_query([
+                'status' => $statusFilter,
+                'service' => $serviceFilter,
+                'page' => $page - 1
+            ])) ?>" aria-label="Предыдущая страница">‹</a>
         <?php else: ?>
-
-            <p>Изменение статуса недоступно.</p>
-
+            <span class="admin-pagination-disabled">‹</span>
         <?php endif; ?>
 
-    <?php endforeach; ?>
+        <span class="admin-pagination-count">
+            <?= $page ?> / <?= $totalPages ?>
+        </span>
+
+        <?php if ($page < $totalPages): ?>
+            <a href="<?= e('/frontend/admin.php?' . http_build_query([
+                'status' => $statusFilter,
+                'service' => $serviceFilter,
+                'page' => $page + 1
+            ])) ?>" aria-label="Следующая страница">›</a>
+        <?php else: ?>
+            <span class="admin-pagination-disabled">›</span>
+        <?php endif; ?>
+
+    </nav>
+<?php endif; ?>
+
 
 <?php endif; ?>
 
-<hr>
+</main>
 
-<form action="/backend/actions/logout.php" method="POST">
-    <button type="submit">Выйти</button>
-</form>
-
-<p><a href="/index.php">На главную</a></p>
-
-</body>
-</html>
+<?php require __DIR__ . '/partials/footer.php'; ?>
