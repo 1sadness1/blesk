@@ -1,10 +1,13 @@
 <?php
+declare(strict_types=1);
 
 class Database
 {
     public static function getConnection(): PDO
     {
-        $dbPath = __DIR__ . '/../database/blesk.sqlite';
+        $config = require __DIR__ . '/../config.php';
+
+        $dbPath = $config['database']['path'];
 
         if (!file_exists($dbPath)) {
             throw new RuntimeException('Файл базы данных не найден');

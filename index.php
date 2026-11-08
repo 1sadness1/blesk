@@ -1,45 +1,43 @@
 <?php
+declare(strict_types=1);
+
 require_once __DIR__ . '/backend/bootstrap.php';
 
-$pageTitle = "Блеск — клининговые услуги";
+$pageTitle = 'Блеск — клининговые услуги';
+$isLoggedIn = Auth::isLoggedIn();
+$isAdmin = Auth::isAdmin();
+
+$mainLink = $isAdmin
+    ? '/frontend/admin.php'
+    : ($isLoggedIn ? '/frontend/application_create.php' : '/frontend/login.php');
+$mainLinkText = $isAdmin ? 'Панель администратора' : 'Создать заявку';
 ?>
 
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($pageTitle) ?></title>
-</head>
-<body>
-    <h1>Клининговая компания «Блеск»</h1>
-    <p>Добро пожаловать на наш сайт!</p>
-    <?php if (Auth::isLoggedIn()): ?>
+<?php require __DIR__ . '/frontend/partials/header.php'; ?>
+    <main class="hero">
+        <h1>Клининговая компания «Блеск»</h1>
+        <p class="subtitle">Уборка квартир и офисов</p>
 
-    <p>Вы успешно вошли в систему!</p>
-    <?php if (Auth::isLoggedIn() && !Auth::isAdmin()): ?>
-    <p>
-        <a href="/frontend/application_create.php">
-            Создать заявку
+        <section class="slider" aria-label="Фотографии услуг">
+            <div class="slide active"><img src="/frontend/assets/images/slide-1.webp" alt="Чистая светлая гостиная"></div>
+            <div class="slide"><img src="/frontend/assets/images/slide-2.webp" alt="Уборка кухни"></div>
+            <div class="slide"><img src="/frontend/assets/images/slide-3.webp" alt="Инвентарь для уборки"></div>
+            <div class="slide"><img src="/frontend/assets/images/slide-4.webp" alt="Уютная чистая спальня"></div>
+            <button class="slider-arrow previous" type="button" aria-label="Предыдущее фото">‹</button>
+            <button class="slider-arrow next" type="button" aria-label="Следующее фото">›</button>
+        </section>
+
+        <div class="dots" aria-label="Выбор фотографии">
+            <button class="dot active" type="button" aria-label="Фото 1" aria-current="true"></button>
+            <button class="dot" type="button" aria-label="Фото 2"></button>
+            <button class="dot" type="button" aria-label="Фото 3"></button>
+            <button class="dot" type="button" aria-label="Фото 4"></button>
+        </div>
+
+        <a class="button-primary" href="<?= htmlspecialchars($mainLink, ENT_QUOTES, 'UTF-8') ?>">
+            <?= htmlspecialchars($mainLinkText, ENT_QUOTES, 'UTF-8') ?>
         </a>
-    </p>
+    </main>
+    <script src="/frontend/assets/js/app.js"></script>
+    <?php require __DIR__ . '/frontend/partials/footer.php'; ?>
 
-    <p>
-        <a href="/frontend/applications.php">
-            Мои заявки
-        </a>
-    </p>
-<?php endif; ?>
-
-    <form action="/backend/actions/logout.php" method="POST">
-        <button type="submit">Выйти</button>
-    </form>
-
-<?php else: ?>
-
-    <p>Вы не авторизованы.</p>
-    <a href="/frontend/login.php">Войти</a>
-
-<?php endif; ?>
-</body>
-</html>
